@@ -2,10 +2,10 @@
  * Main file for UNIX Shell
  *      Deals with the startup, display screen, and main loop
  * 
- * NOTE: stdin redirection '<' when using the shell as the 
- *          file to input into (ex: ./shell < input.txt)
- *          results in an infinite loop, after reading through 
- *          the file.
+ * 
+ * TODO: 
+ *  Command History
+ *  
  * 
  * @author Sam Kapp
 */
@@ -16,23 +16,48 @@
 #include <time.h> 
 #include <unistd.h>
 #include <sys/wait.h>
+#include <stdbool.h>
 
 void display();
 
-int main() {
+
+int main(int s_argc, char *s_argv[]) {
     display();
+
+    // Check if batch mode 
+    bool batch_mode = false; 
+    FILE *input_stream = stdin;
+    FILE *batch_file = NULL;
+    if (s_argc > 1) {
+        batch_mode = true;
+        batch_file = fopen(s_argv[1], "r");
+        if (!batch_file) {
+            printf("Error: unable to open batch file.\n");
+            return -1;
+        }
+        input_stream = batch_file;
+    }
 
     // MAIN LOOP
     while (1) {
-        // User cursor location 
-        printf("> ");
+        // User cursor location, only shows if not in batch mode
+        if (!batch_mode) {
+            printf("> ");
+        }
 
         char *user_input = NULL; 
         size_t input_size = 0;
 
-        if (getline(&user_input, &input_size, stdin) == -1) {
-            printf("Error reading command. Please try again.\n");
-            continue;
+        if (getline(&user_input, &input_size, input_stream) == -1) {
+            // Check if in batch mode, reset to interactive mode if so
+            if (batch_mode) {
+                batch_mode = false; 
+                input_stream = stdin; 
+                continue;
+            } else {
+                printf("Error reading command. Please try again.\n");
+                continue;
+            }
         } else if (strcmp(user_input, "\n") == 0) {
             // Empty command entered, ignore and continue
         } else {
@@ -64,6 +89,12 @@ int main() {
         }
         free(user_input);
     } 
+
+    // Close the batch file if in batch mode
+    if (batch_mode) {
+        fclose(batch_file);
+    }
+
     return 0;
 }
 
