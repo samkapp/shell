@@ -17,8 +17,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdbool.h>
+#include <termios.h>
 
 void display();
+char getch();
 
 
 int main(int s_argc, char *s_argv[]) {
@@ -44,6 +46,37 @@ int main(int s_argc, char *s_argv[]) {
         if (!batch_mode) {
             printf("> ");
         }
+
+        // Check user input, used for history 
+        char key_press = getch();
+
+        // Handle arrow keys and ctrl-c
+        switch (key_press) {
+            case 27: // ESC, which is the beginning of an escape sequence for arrow keys
+                // Read the next two characters to identify the arrow key
+                if (getch() == '[') {
+                    char arrow_key = getch();
+                    switch (arrow_key) {
+                        case 'A':
+                            printf("Up Arrow\n");
+                            break;
+                        case 'B':
+                            printf("Down Arrow\n");
+                            break;
+                        // Add cases for left and right arrows if needed
+                    }
+                }
+                break;
+            case 3: // Ctrl-c
+                printf("ctrl-c\n");
+                // Handle ctrl-c behavior
+                break;
+            default:
+                printf("%c", key_press);
+                // Handle regular character input
+        }   
+
+
 
         char *user_input = NULL; 
         size_t input_size = 0;
@@ -130,3 +163,30 @@ void display() {
 
     printf("Created by Sam Kapp.\n");
 }
+
+/**
+ * Code for reading user input
+ * Not mine, gotten from https://stackoverflow.com/questions/7469139/what-is-the-equivalent-to-getch-getche-in-linux
+*/
+char getch(void)
+{
+    char buf = 0;
+    struct termios old = {0};
+    fflush(stdout);
+    if(tcgetattr(0, &old) < 0)
+        perror("tcsetattr()");
+    old.c_lflag &= ~ICANON;
+    old.c_lflag &= ~ECHO;
+    old.c_cc[VMIN] = 1;
+    old.c_cc[VTIME] = 0;
+    if(tcsetattr(0, TCSANOW, &old) < 0)
+        perror("tcsetattr ICANON");
+    if(read(0, &buf, 1) < 0)
+        perror("read()");
+    old.c_lflag |= ICANON;
+    old.c_lflag |= ECHO;
+    if(tcsetattr(0, TCSADRAIN, &old) < 0)
+        perror("tcsetattr ~ICANON");
+    //printf("%c\n", buf);
+    return buf;
+ }
