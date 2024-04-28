@@ -49,6 +49,7 @@ void exit_cmd(int argc, char *argv[]) {
     } else {
         printf("Exiting Shell.\n");
         exit(0);
+        printf("shoulnd't reach here.\n");
     }
 }
 
