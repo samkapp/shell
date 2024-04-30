@@ -6,9 +6,6 @@
  * Can handle redirection 
  * Can handle a single pipe
  * 
- * NOTE: chatgpt was used to reset file descriptors in redirection, along
- *          with refactoring mode to be set through the if statements
- * 
  * @author Sam Kapp
 */
 #include "commands.h"
@@ -47,9 +44,10 @@ void exit_cmd(int argc, char *argv[]) {
         printf("exit: too many arguments.\n");
         return;
     } else {
-        printf("Exiting Shell.\n");
+        printf("\033[38;5;39m");        
+        printf("\nStay safe out there in the dessert.\n");
+        printf("\033[0m");
         exit(0);
-        printf("shoulnd't reach here.\n");
     }
 }
 
